@@ -5,15 +5,9 @@ require 'watir'
 module Hotel
     class << self
         def search(name)
-            tripadvisor_url = tripadvisor_url(name)
-            booking_url = booking_url(name)
-            #holidaycheck_url = "" #holidaycheck_url(name)
-
-            {
-            tripadvisor: tripadvisor_url,
-            booking: booking_url #,
-            #holidaycheck: holidaycheck_url
-            }
+            [tripadvisor_url(name) + " for tripadvisor.com",
+            booking_url(name) + " for booking.com",
+            holidaycheck_url(name) + " for holidaycheck.de"]
         end
 
         private
@@ -46,19 +40,15 @@ module Hotel
         end
     
         def holidaycheck_url(name)
-            url = "https://www.holidaycheck.de/suche?hc_query=#{URI.encode_www_form_component(name)}"
-            doc = Nokogiri::HTML(URI.open(url))
-            result = doc.css('.result-item > .title > a').first
+            url = "https://www.holidaycheck.de/svc/search-mixer/search?query=#{URI.encode_www_form_component(name)}&tenant=hc-search&page=%2Fhotels&scope=hotel&travelkind=hotel"
 
-            #out_file = File.new("trip.html", "w")
-            #out_file.puts(doc)
-            #out_file.close
+            doc = Net::HTTP.get(URI(url))
+            result = JSON.parse(doc)
 
-            #puts(name)
-            #puts(URI.encode_www_form_component(name))
-            #puts(result)
+            url = "https://www.holidaycheck.de/"
+            result = url+result["transformedResults"][0]["link"]
 
-            result ? result['href'] : nil
+            result ? "#{result}" : nil
         end
     end
 end
